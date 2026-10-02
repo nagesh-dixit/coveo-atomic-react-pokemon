@@ -1,0 +1,10 @@
+.page {
+  width: min(100% - 2rem, 72rem);
+  margin-inline: auto;
+  padding-block: 2rem;
+}
+
+.page h1 {
+  margin-bottom: 1.5rem;
+  font-size: 1.75rem;
+}
