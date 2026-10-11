@@ -5,7 +5,9 @@ import {
   buildRelevanceSortCriterion,
   SortOrder,
 } from "@coveo/headless/ssr";
+import { buildInteractiveResult } from "@coveo/headless";
 import Image from "next/image";
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { engineDefinition } from "@/lib/coveo-engine";
 import styles from "./search-experience.module.css";
@@ -60,6 +62,7 @@ function displayField(value: unknown): string | undefined {
 
 export default function SearchExperience() {
   const searchBox = engineDefinition.controllers.useSearchBox();
+  const engine = engineDefinition.useEngine();
   const resultList = engineDefinition.controllers.useResultList();
   const generationFacet = engineDefinition.controllers.useGenerationFacet();
   const speciesFacet = engineDefinition.controllers.useSpeciesFacet();
@@ -176,6 +179,27 @@ export default function SearchExperience() {
             <ol className={`${styles.resultList} ${viewMode === "grid" ? styles.gridView : styles.listView}`}>
               {resultList.state.results.map((result) => {
                 const imageSrc = displayField(result.raw.pm_image);
+                const detailParams = new URLSearchParams({
+                  title: result.title || result.clickUri,
+                  source: result.clickUri,
+                });
+                const detailFields = {
+                  uri: result.printableUri,
+                  excerpt: result.excerpt,
+                  image: imageSrc,
+                  generation: displayField(result.raw.pm_generation),
+                  species: displayField(result.raw.pm_species),
+                  type: displayField(result.raw.pm_type),
+                  abilities: displayField(result.raw.pm_abilities),
+                };
+                Object.entries(detailFields).forEach(([key, value]) => {
+                  if (value) detailParams.set(key, value);
+                });
+                const detailsHref = `/pokemon?${detailParams.toString()}`;
+                const interactiveResult = engine
+                  ? buildInteractiveResult(engine, { options: { result } })
+                  : undefined;
+                const selectResult = () => interactiveResult?.select();
                 const metadata = [
                   ["", displayField(result.raw.pm_generation)],
                   ["Species:", displayField(result.raw.pm_species)],
@@ -189,19 +213,38 @@ export default function SearchExperience() {
                     key={result.uniqueId}
                   >
                     {imageSrc && (
-                      <Image
-                        className={styles.resultImage}
-                        src={imageSrc}
-                        alt={`${result.title || "Pokemon"} artwork`}
-                        width={320}
-                        height={220}
-                        unoptimized
-                      />
+                      <Link
+                        href={detailsHref}
+                        aria-label={`View details for ${result.title || "Pokemon"}`}
+                        onClick={selectResult}
+                        onContextMenu={selectResult}
+                        onMouseDown={selectResult}
+                        onMouseUp={selectResult}
+                        onTouchStart={() => interactiveResult?.beginDelayedSelect()}
+                        onTouchEnd={() => interactiveResult?.cancelPendingSelect()}
+                      >
+                        <Image
+                          className={styles.resultImage}
+                          src={imageSrc}
+                          alt={`${result.title || "Pokemon"} artwork`}
+                          width={320}
+                          height={220}
+                          unoptimized
+                        />
+                      </Link>
                     )}
                     <div className={styles.resultBody}>
-                      <a href={result.clickUri} target="_blank" rel="noreferrer">
+                      <Link
+                        href={detailsHref}
+                        onClick={selectResult}
+                        onContextMenu={selectResult}
+                        onMouseDown={selectResult}
+                        onMouseUp={selectResult}
+                        onTouchStart={() => interactiveResult?.beginDelayedSelect()}
+                        onTouchEnd={() => interactiveResult?.cancelPendingSelect()}
+                      >
                         {result.title || result.clickUri}
-                      </a>
+                      </Link>
                       <p className={styles.uri}>{result.printableUri}</p>
                       {result.excerpt && <p className={styles.excerpt}>{result.excerpt}</p>}
                       {metadata.length > 0 && (

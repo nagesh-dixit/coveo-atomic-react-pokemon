@@ -1,0 +1,102 @@
+.page {
+  width: min(100% - 2rem, 72rem);
+  margin-inline: auto;
+  padding-block: 2rem 4rem;
+}
+
+.backLink {
+  display: inline-block;
+  margin-bottom: 1.5rem;
+  color: #176b55;
+  font-weight: 650;
+}
+
+.detail {
+  display: grid;
+  grid-template-columns: minmax(16rem, 0.8fr) minmax(0, 1.2fr);
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: start;
+  border-top: 1px solid #d8dfdc;
+  padding-top: 2rem;
+}
+
+.image {
+  width: 100%;
+  height: auto;
+  max-height: 32rem;
+  object-fit: contain;
+  background: #f0f5f2;
+}
+
+.content {
+  min-width: 0;
+}
+
+.kicker {
+  margin: 0 0 0.75rem;
+  color: #176b55;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.content h1 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1.05;
+}
+
+.uri {
+  margin: 0.75rem 0 1.5rem;
+  color: #5c6964;
+  overflow-wrap: anywhere;
+}
+
+.excerpt {
+  margin: 1.5rem 0;
+  font-size: 1.125rem;
+  line-height: 1.65;
+}
+
+.metadata {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+.metadata div {
+  border-top: 1px solid #d8dfdc;
+  padding-top: 0.75rem;
+}
+
+.metadata dt {
+  margin-bottom: 0.35rem;
+  color: #5c6964;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+.metadata dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.sourceLink {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  padding: 0.65rem 1rem;
+  background: #176b55;
+  color: white;
+  font-weight: 650;
+}
+
+@media (max-width: 680px) {
+  .detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .image {
+    max-height: 22rem;
+  }
+}
