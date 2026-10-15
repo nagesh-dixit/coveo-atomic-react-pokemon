@@ -7,6 +7,7 @@ import {
   defineResultList,
   defineSearchBox,
   defineSearchEngine,
+  defineSearchParameterManager,
   defineSort,
 } from "@coveo/headless-react/ssr";
 
@@ -67,6 +68,7 @@ export const engineDefinition = defineSearchEngine({
     specialDefenseFilter: defineStatFilter("pm_special_defense"),
     speedFilter: defineStatFilter("pm_speed"),
     totalFilter: defineStatFilter("pm_total"),
+    parameterManager: defineSearchParameterManager(),
     pager: definePager(),
     sort: defineSort(),
   },

@@ -1,11 +1,11 @@
-import type { NavigatorContext } from "@coveo/headless/ssr";
+import { buildSSRSearchParameterSerializer, type NavigatorContext } from "@coveo/headless/ssr";
 import { randomUUID } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import SearchExperience from "@/components/search-experience";
 import { SearchProvider } from "@/components/search-provider";
 import { engineDefinition } from "@/lib/coveo-engine";
 
-export default async function Home() {
+export default async function Home({ searchParams }: PageProps<"/">) {
   const requestHeaders = await headers();
   const cookieStore = await cookies();
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
@@ -19,10 +19,18 @@ export default async function Home() {
   };
 
   engineDefinition.setNavigatorContextProvider(() => navigatorContext);
-  const staticState = await engineDefinition.fetchStaticState();
+  const { toSearchParameters } = buildSSRSearchParameterSerializer();
+  const parameters = toSearchParameters(await searchParams);
+  const staticState = await engineDefinition.fetchStaticState({
+    controllers: { parameterManager: { initialState: { parameters } } },
+  });
 
   return (
-    <SearchProvider staticState={staticState} navigatorContext={navigatorContext}>
+    <SearchProvider
+      staticState={staticState}
+      navigatorContext={navigatorContext}
+      parameters={parameters}
+    >
       <SearchExperience />
     </SearchProvider>
   );

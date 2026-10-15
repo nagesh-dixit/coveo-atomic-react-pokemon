@@ -3,12 +3,13 @@
 import {
   buildFieldSortCriterion,
   buildRelevanceSortCriterion,
+  buildSSRSearchParameterSerializer,
   SortOrder,
 } from "@coveo/headless/ssr";
 import { buildInteractiveResult } from "@coveo/headless";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, type CSSProperties, type FormEvent } from "react";
+import { useEffect, useState, type CSSProperties, type FormEvent } from "react";
 import { engineDefinition } from "@/lib/coveo-engine";
 import styles from "./search-experience.module.css";
 
@@ -19,6 +20,7 @@ type SearchResult = ReturnType<typeof engineDefinition.controllers.useResultList
 
 const relevanceCriterion = buildRelevanceSortCriterion();
 const generationCriterion = buildFieldSortCriterion("pm_generation", SortOrder.Ascending);
+const { serialize } = buildSSRSearchParameterSerializer();
 
 function FacetSection({ label, controller }: { label: string; controller: FacetController }) {
   return (
@@ -239,7 +241,29 @@ export default function SearchExperience() {
   const totalFilter = engineDefinition.controllers.useTotalFilter();
   const pager = engineDefinition.controllers.usePager();
   const sort = engineDefinition.controllers.useSort();
+  const parameterManager = engineDefinition.controllers.useParameterManager();
   const [query, setQuery] = useState(searchBox.state.value);
+  const [syncedQuery, setSyncedQuery] = useState(searchBox.state.value);
+  const searchParameters = parameterManager.state.parameters;
+  // Search page URL with the current query, facets, sort and page, used for the details "Back" link.
+  const searchHref = new URL(serialize(searchParameters, new URL("/", "http://localhost"))).search || "";
+
+  // Keep the input in step when the engine's query changes outside of typing (e.g. restored from the URL).
+  if (searchBox.state.value !== syncedQuery) {
+    setSyncedQuery(searchBox.state.value);
+    setQuery(searchBox.state.value);
+  }
+
+  // Mirror the search state into the URL so back navigation, refresh and shared links restore it.
+  // replaceState keeps filter changes out of the history stack.
+  const isHydrated = Boolean(parameterManager.methods);
+  useEffect(() => {
+    if (!isHydrated) return;
+    const url = serialize(searchParameters, new URL(window.location.href));
+    if (url !== window.location.href) {
+      window.history.replaceState(null, "", url);
+    }
+  }, [isHydrated, searchParameters]);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const facets = [generationFacet, speciesFacet, typeFacet, abilitiesFacet];
@@ -396,6 +420,7 @@ export default function SearchExperience() {
                 const detailParams = new URLSearchParams({
                   title: result.title || result.clickUri,
                   source: result.clickUri,
+                  returnTo: `/${searchHref}`,
                 });
                 const detailFields = {
                   uri: result.printableUri,

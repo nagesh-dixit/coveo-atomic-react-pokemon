@@ -25,7 +25,7 @@ export type PokemonForm = {
   abilities?: string;
 };
 
-export default function PokemonFormTabs({ forms }: { forms: PokemonForm[] }) {
+export default function PokemonFormTabs({ forms, returnTo }: { forms: PokemonForm[]; returnTo: string }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const selectedForm = forms[selectedIndex];
   const metadata = [
@@ -46,7 +46,7 @@ export default function PokemonFormTabs({ forms }: { forms: PokemonForm[] }) {
 
   return (
     <main className={styles.page}>
-      <Link className={styles.backLink} href="/">
+      <Link className={styles.backLink} href={returnTo}>
         Back to search
       </Link>
       <div className={styles.tabs} role="tablist" aria-label={`${forms[0].title} forms`}>

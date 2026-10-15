@@ -15,6 +15,12 @@ function isWebUrl(value: string | undefined): value is string {
   }
 }
 
+// Only accept a same-site path back to the search page, never an external URL.
+function getReturnTo(value: string | string[] | undefined): string {
+  const returnTo = getValue(value);
+  return returnTo && /^\/(?:\?|$)/.test(returnTo) ? returnTo : "/";
+}
+
 function parseForms(value: string | string[] | undefined): PokemonForm[] {
   if (typeof value !== "string") return [];
 
@@ -67,12 +73,14 @@ export default async function PokemonPage({
   const forms = parseForms(params.forms);
   const title = getValue(params.title);
   const source = getValue(params.source);
+  const returnTo = getReturnTo(params.returnTo);
 
-  if (forms.length > 0) return <PokemonFormTabs forms={forms} />;
+  if (forms.length > 0) return <PokemonFormTabs forms={forms} returnTo={returnTo} />;
   if (!title || !isWebUrl(source)) notFound();
 
   return (
     <PokemonFormTabs
+      returnTo={returnTo}
       forms={[
         {
           label: title,
