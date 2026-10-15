@@ -8,11 +8,14 @@ import {
 import { buildInteractiveResult } from "@coveo/headless";
 import Image from "next/image";
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useState, type CSSProperties, type FormEvent } from "react";
 import { engineDefinition } from "@/lib/coveo-engine";
 import styles from "./search-experience.module.css";
 
-type FacetController = ReturnType<typeof engineDefinition.controllers.useGenerationFacet>;
+type FacetController = ReturnType<typeof engineDefinition.controllers.useSpeciesFacet>;
+type GenerationFacetController = ReturnType<typeof engineDefinition.controllers.useGenerationFacet>;
+type NumericFilterController = ReturnType<typeof engineDefinition.controllers.useHpFilter>;
+type SearchResult = ReturnType<typeof engineDefinition.controllers.useResultList>["state"]["results"][number];
 
 const relevanceCriterion = buildRelevanceSortCriterion();
 const generationCriterion = buildFieldSortCriterion("pm_generation", SortOrder.Ascending);
@@ -50,6 +53,123 @@ function FacetSection({ label, controller }: { label: string; controller: FacetC
   );
 }
 
+function GenerationFacet({ controller }: { controller: GenerationFacetController }) {
+  const values = controller.state.values;
+
+  return (
+    <section className={styles.facet}>
+      <div className={styles.numericFilterHeading}>
+        <h3>Generation</h3>
+        {controller.state.hasActiveValues && (
+          <button
+            className={styles.inlineTextButton}
+            type="button"
+            onClick={() => controller.methods?.deselectAll()}
+          >
+            Any
+          </button>
+        )}
+      </div>
+      <div className={styles.generationGrid} role="group" aria-label="Generation">
+        {values.map((value) => (
+          <button
+            key={value.start}
+            type="button"
+            aria-pressed={value.state === "selected"}
+            aria-label={`Generation ${value.start}, ${value.numberOfResults} results`}
+            disabled={value.numberOfResults === 0 && value.state !== "selected"}
+            title={`${value.numberOfResults} results`}
+            onClick={() => controller.methods?.toggleSelect(value)}
+          >
+            <span>{value.start}</span>
+            <small>{value.numberOfResults}</small>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function NumericFilterSlider({
+  label,
+  maximum,
+  controller,
+}: {
+  label: string;
+  maximum: number;
+  controller: NumericFilterController;
+}) {
+  // Local draft while a handle is being dragged, so a query only fires on release.
+  const [draft, setDraft] = useState<{ start: number; end: number } | null>(null);
+  const start = draft?.start ?? controller.state.range?.start ?? 0;
+  const end = draft?.end ?? controller.state.range?.end ?? maximum;
+  const isFiltered = start > 0 || end < maximum;
+  const inputId = `stat-filter-${label.toLowerCase().replaceAll(" ", "-")}`;
+
+  function commit() {
+    if (!draft) return;
+    if (draft.start <= 0 && draft.end >= maximum) {
+      controller.methods?.clear();
+    } else {
+      controller.methods?.setRange(draft);
+    }
+    setDraft(null);
+  }
+
+  const commitHandlers = { onPointerUp: commit, onKeyUp: commit, onBlur: commit, onTouchEnd: commit };
+
+  return (
+    <section className={styles.facet}>
+      <div className={styles.numericFilterHeading}>
+        <h3>{label}</h3>
+        <output htmlFor={`${inputId}-min ${inputId}-max`}>
+          {isFiltered ? `${start} – ${end}` : "Any"}
+        </output>
+      </div>
+      <div
+        className={styles.rangeSlider}
+        style={
+          {
+            "--range-start": `${(start / maximum) * 100}%`,
+            "--range-end": `${(end / maximum) * 100}%`,
+          } as CSSProperties
+        }
+      >
+        <input
+          aria-label={`Minimum ${label}`}
+          id={`${inputId}-min`}
+          max={maximum}
+          min={0}
+          // Keep the min handle grabbable when both handles meet at the top of the scale.
+          style={start > maximum / 2 ? { zIndex: 2 } : undefined}
+          type="range"
+          value={start}
+          onChange={(event) =>
+            setDraft({ start: Math.min(Number(event.target.value), end), end })
+          }
+          {...commitHandlers}
+        />
+        <input
+          aria-label={`Maximum ${label}`}
+          id={`${inputId}-max`}
+          max={maximum}
+          min={0}
+          type="range"
+          value={end}
+          onChange={(event) =>
+            setDraft({ start, end: Math.max(Number(event.target.value), start) })
+          }
+          {...commitHandlers}
+        />
+      </div>
+      <div className={styles.sliderScale} aria-hidden="true">
+        <span>0</span>
+        <span>{maximum}</span>
+      </div>
+    </section>
+  );
+}
+
 function displayField(value: unknown): string | undefined {
   if (typeof value === "string" || typeof value === "number") {
     return String(value);
@@ -60,6 +180,48 @@ function displayField(value: unknown): string | undefined {
   return undefined;
 }
 
+function identifiableUri(result: SearchResult): string | undefined {
+  return displayField(result.raw.identifiableuri);
+}
+
+function parentIdentifiableUri(uri: string | undefined): string | undefined {
+  return uri?.replace(/\/subitem:\d+$/i, "");
+}
+
+function isSubitem(uri: string | undefined): boolean {
+  return Boolean(uri && /\/subitem:\d+$/i.test(uri));
+}
+
+function formLabel(
+  result: SearchResult,
+  parentTitle: string,
+  parentSource: string,
+): string {
+  const image = displayField(result.raw.pm_image);
+  const subitemNumber = identifiableUri(result)?.match(/\/subitem:(\d+)$/i)?.[1];
+
+  if (image) {
+    try {
+      const imageName = new URL(image).pathname.split("/").pop()?.replace(/\.[^.]+$/, "").toLowerCase();
+      const parentSlug = new URL(parentSource).pathname.split("/").filter(Boolean).pop()?.toLowerCase();
+      const pokemonName = parentTitle.replace(/\s+Pok[eé]dex.*$/i, "").trim();
+
+      if (imageName && parentSlug && imageName.startsWith(`${parentSlug}-`)) {
+        const variant = imageName.slice(parentSlug.length + 1).split("-").filter(Boolean);
+        const titleCase = (word: string) => word.charAt(0).toUpperCase() + word.slice(1);
+        if (variant[0] === "mega") {
+          return `Mega ${pokemonName} ${variant.slice(1).map(titleCase).join(" ")}`;
+        }
+        return `${pokemonName} ${variant.map(titleCase).join(" ")}`;
+      }
+    } catch {
+      return subitemNumber ? `Form ${subitemNumber}` : "Form";
+    }
+  }
+
+  return subitemNumber ? `Form ${subitemNumber}` : "Form";
+}
+
 export default function SearchExperience() {
   const searchBox = engineDefinition.controllers.useSearchBox();
   const engine = engineDefinition.useEngine();
@@ -68,13 +230,31 @@ export default function SearchExperience() {
   const speciesFacet = engineDefinition.controllers.useSpeciesFacet();
   const typeFacet = engineDefinition.controllers.useTypeFacet();
   const abilitiesFacet = engineDefinition.controllers.useAbilitiesFacet();
+  const hpFilter = engineDefinition.controllers.useHpFilter();
+  const attackFilter = engineDefinition.controllers.useAttackFilter();
+  const defenseFilter = engineDefinition.controllers.useDefenseFilter();
+  const specialAttackFilter = engineDefinition.controllers.useSpecialAttackFilter();
+  const specialDefenseFilter = engineDefinition.controllers.useSpecialDefenseFilter();
+  const speedFilter = engineDefinition.controllers.useSpeedFilter();
+  const totalFilter = engineDefinition.controllers.useTotalFilter();
   const pager = engineDefinition.controllers.usePager();
   const sort = engineDefinition.controllers.useSort();
   const [query, setQuery] = useState(searchBox.state.value);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const facets = [generationFacet, speciesFacet, typeFacet, abilitiesFacet];
-  const hasActiveFilters = facets.some((facet) => facet.state.hasActiveValues);
+  const numericFilters = [
+    { label: "HP", maximum: 255, controller: hpFilter },
+    { label: "Attack", maximum: 255, controller: attackFilter },
+    { label: "Defense", maximum: 255, controller: defenseFilter },
+    { label: "Special Attack", maximum: 255, controller: specialAttackFilter },
+    { label: "Special Defense", maximum: 255, controller: specialDefenseFilter },
+    { label: "Speed", maximum: 255, controller: speedFilter },
+    { label: "Total", maximum: 720, controller: totalFilter },
+  ];
+  const hasActiveFilters =
+    facets.some((facet) => facet.state.hasActiveValues) ||
+    numericFilters.some(({ controller }) => Boolean(controller.state.range));
   const sortByGeneration = sort.methods?.isSortedBy(generationCriterion) ?? false;
 
   function submitSearch(event: FormEvent<HTMLFormElement>) {
@@ -126,15 +306,29 @@ export default function SearchExperience() {
           <div className={styles.filterHeading}>
             <h2>Refine results</h2>
             {hasActiveFilters && (
-              <button className={styles.textButton} onClick={() => facets.forEach((facet) => facet.methods?.deselectAll())}>
+              <button
+                className={styles.textButton}
+                onClick={() => {
+                  facets.forEach((facet) => facet.methods?.deselectAll());
+                  numericFilters.forEach(({ controller }) => controller.methods?.clear());
+                }}
+              >
                 Clear all
               </button>
             )}
           </div>
-          <FacetSection label="Generation" controller={generationFacet} />
+          <GenerationFacet controller={generationFacet} />
           <FacetSection label="Species" controller={speciesFacet} />
           <FacetSection label="Type" controller={typeFacet} />
           <FacetSection label="Abilities" controller={abilitiesFacet} />
+          {numericFilters.map(({ label, maximum, controller }) => (
+            <NumericFilterSlider
+              key={label}
+              label={label}
+              maximum={maximum}
+              controller={controller}
+            />
+          ))}
         </aside>
 
         <section className={styles.results} aria-label="Search results">
@@ -179,6 +373,26 @@ export default function SearchExperience() {
             <ol className={`${styles.resultList} ${viewMode === "grid" ? styles.gridView : styles.listView}`}>
               {resultList.state.results.map((result) => {
                 const imageSrc = displayField(result.raw.pm_image);
+                const stats = [
+                  { label: "HP", value: displayField(result.raw.pm_hp), maximum: 255 },
+                  { label: "Attack", value: displayField(result.raw.pm_attack), maximum: 255 },
+                  { label: "Defense", value: displayField(result.raw.pm_defense), maximum: 255 },
+                  {
+                    label: "Special Attack",
+                    value: displayField(result.raw.pm_special_attack),
+                    maximum: 255,
+                  },
+                  {
+                    label: "Special Defense",
+                    value: displayField(result.raw.pm_special_defense),
+                    maximum: 255,
+                  },
+                  { label: "Speed", value: displayField(result.raw.pm_speed), maximum: 255 },
+                  { label: "Total", value: displayField(result.raw.pm_total), maximum: 720 },
+                ].filter(
+                  (stat): stat is typeof stat & { value: string } =>
+                    stat.value !== undefined && Number.isFinite(Number(stat.value)),
+                );
                 const detailParams = new URLSearchParams({
                   title: result.title || result.clickUri,
                   source: result.clickUri,
@@ -188,6 +402,13 @@ export default function SearchExperience() {
                   excerpt: result.excerpt,
                   image: imageSrc,
                   generation: displayField(result.raw.pm_generation),
+                  hp: displayField(result.raw.pm_hp),
+                  attack: displayField(result.raw.pm_attack),
+                  defense: displayField(result.raw.pm_defense),
+                  specialAttack: displayField(result.raw.pm_special_attack),
+                  specialDefense: displayField(result.raw.pm_special_defense),
+                  speed: displayField(result.raw.pm_speed),
+                  total: displayField(result.raw.pm_total),
                   species: displayField(result.raw.pm_species),
                   type: displayField(result.raw.pm_type),
                   abilities: displayField(result.raw.pm_abilities),
@@ -195,13 +416,70 @@ export default function SearchExperience() {
                 Object.entries(detailFields).forEach(([key, value]) => {
                   if (value) detailParams.set(key, value);
                 });
+                const resultUri = identifiableUri(result);
+                const parentUri = parentIdentifiableUri(resultUri);
+                const relatedResults = parentUri
+                  ? resultList.state.results.filter(
+                      (candidate) => parentIdentifiableUri(identifiableUri(candidate)) === parentUri,
+                    )
+                  : [];
+                const formResults = relatedResults.filter(
+                  (candidate) =>
+                    displayField(candidate.raw.documenttype)?.toLowerCase() === "form" &&
+                    isSubitem(identifiableUri(candidate)),
+                );
+
+                if (formResults.length > 0) {
+                  const parentResult =
+                    relatedResults.find(
+                      (candidate) => !displayField(candidate.raw.documenttype) && !isSubitem(identifiableUri(candidate)),
+                    ) ??
+                    relatedResults.find(
+                      (candidate) =>
+                        displayField(candidate.raw.documenttype)?.toLowerCase() === "form" &&
+                        !isSubitem(identifiableUri(candidate)),
+                    ) ??
+                    relatedResults.find((candidate) => !isSubitem(identifiableUri(candidate))) ??
+                    result;
+                  const parentTitle = parentResult.title || parentResult.clickUri;
+                  const parentSource = parentResult.clickUri;
+                  const forms = [parentResult, ...formResults].map((form, index) => {
+                    const formImage = displayField(form.raw.pm_image);
+                    const formUri = identifiableUri(form);
+
+                    return {
+                      label:
+                        index === 0
+                          ? displayField(form.raw.pm_form) || form.title || "Base"
+                          : formLabel(form, parentTitle, parentSource),
+                      title: form.title || parentTitle,
+                      source: form.clickUri || parentSource,
+                      uri: form.printableUri,
+                      excerpt: form.excerpt,
+                      image: formImage,
+                      generation: displayField(form.raw.pm_generation),
+                      hp: displayField(form.raw.pm_hp),
+                      attack: displayField(form.raw.pm_attack),
+                      defense: displayField(form.raw.pm_defense),
+                      specialAttack: displayField(form.raw.pm_special_attack),
+                      specialDefense: displayField(form.raw.pm_special_defense),
+                      speed: displayField(form.raw.pm_speed),
+                      total: displayField(form.raw.pm_total),
+                      species: displayField(form.raw.pm_species),
+                      type: displayField(form.raw.pm_type),
+                      abilities: displayField(form.raw.pm_abilities),
+                      identifiableUri: formUri,
+                    };
+                  });
+                  detailParams.set("forms", JSON.stringify(forms));
+                }
                 const detailsHref = `/pokemon?${detailParams.toString()}`;
                 const interactiveResult = engine
                   ? buildInteractiveResult(engine, { options: { result } })
                   : undefined;
                 const selectResult = () => interactiveResult?.select();
                 const metadata = [
-                  ["", displayField(result.raw.pm_generation)],
+                  ["Generation:", displayField(result.raw.pm_generation)],
                   ["Species:", displayField(result.raw.pm_species)],
                   ["Type:", displayField(result.raw.pm_type)],
                   ["Abilities:", displayField(result.raw.pm_abilities)],
@@ -261,6 +539,34 @@ export default function SearchExperience() {
                             </li>
                           ))}
                         </ul>
+                      )}
+                      {stats.length > 0 && (
+                        <div
+                          className={styles.statsScroller}
+                          role="region"
+                          aria-label={`${result.title || "Pokemon"} base stats`}
+                          tabIndex={0}
+                        >
+                          <p className={styles.statsHeading}>Base stats</p>
+                          <ul className={styles.statsList}>
+                            {stats.map((stat) => {
+                              const numericValue = Number(stat.value);
+                              const fill = Math.min(100, Math.max(0, (numericValue / stat.maximum) * 100));
+
+                              return (
+                                <li className={styles.stat} key={stat.label}>
+                                  <div className={styles.statHeader}>
+                                    <span>{stat.label}</span>
+                                    <span>{stat.value}</span>
+                                  </div>
+                                  <div className={styles.statTrack} aria-hidden="true">
+                                    <span style={{ width: `${fill}%` }} />
+                                  </div>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
                       )}
                     </div>
                   </li>

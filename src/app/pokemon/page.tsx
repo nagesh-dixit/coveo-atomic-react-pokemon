@@ -1,7 +1,5 @@
-import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import styles from "./page.module.css";
+import PokemonFormTabs, { type PokemonForm } from "./form-tabs";
 
 function getValue(value: string | string[] | undefined): string | undefined {
   return typeof value === "string" && value.length > 0 ? value : undefined;
@@ -17,62 +15,85 @@ function isWebUrl(value: string | undefined): value is string {
   }
 }
 
+function parseForms(value: string | string[] | undefined): PokemonForm[] {
+  if (typeof value !== "string") return [];
+
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed.flatMap((item): PokemonForm[] => {
+      if (typeof item !== "object" || item === null) return [];
+      const form = item as Record<string, unknown>;
+      const title = typeof form.title === "string" ? form.title : undefined;
+      const source = typeof form.source === "string" ? form.source : undefined;
+
+      if (!title || !isWebUrl(source)) return [];
+
+      const optionalValue = (key: string) =>
+        typeof form[key] === "string" ? (form[key] as string) : undefined;
+
+      return [{
+        label: optionalValue("label") || title,
+        title,
+        source,
+        uri: optionalValue("uri"),
+        excerpt: optionalValue("excerpt"),
+        image: isWebUrl(optionalValue("image")) ? optionalValue("image") : undefined,
+        generation: optionalValue("generation"),
+        hp: optionalValue("hp"),
+        attack: optionalValue("attack"),
+        defense: optionalValue("defense"),
+        specialAttack: optionalValue("specialAttack"),
+        specialDefense: optionalValue("specialDefense"),
+        speed: optionalValue("speed"),
+        total: optionalValue("total"),
+        species: optionalValue("species"),
+        type: optionalValue("type"),
+        abilities: optionalValue("abilities"),
+      }];
+    });
+  } catch {
+    return [];
+  }
+}
+
 export default async function PokemonPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
+  const forms = parseForms(params.forms);
   const title = getValue(params.title);
   const source = getValue(params.source);
-  const image = getValue(params.image);
 
+  if (forms.length > 0) return <PokemonFormTabs forms={forms} />;
   if (!title || !isWebUrl(source)) notFound();
 
-  const metadata: [string, string | undefined][] = [
-    ["Generation", getValue(params.generation)],
-    ["Species", getValue(params.species)],
-    ["Type", getValue(params.type)],
-    ["Abilities", getValue(params.abilities)],
-  ];
-
   return (
-    <main className={styles.page}>
-      <Link className={styles.backLink} href="/">
-        Back to search
-      </Link>
-      <article className={styles.detail}>
-        {image && isWebUrl(image) && (
-          <Image
-            className={styles.image}
-            src={image}
-            alt={`${title} artwork`}
-            width={640}
-            height={440}
-            unoptimized
-            priority
-          />
-        )}
-        <div className={styles.content}>
-          <p className={styles.kicker}>POKEMON DETAILS</p>
-          <h1>{title}</h1>
-          {getValue(params.uri) && <p className={styles.uri}>{getValue(params.uri)}</p>}
-          {getValue(params.excerpt) && <p className={styles.excerpt}>{getValue(params.excerpt)}</p>}
-          {metadata.some(([, value]) => value) && (
-            <dl className={styles.metadata}>
-              {metadata.filter((field): field is [string, string] => Boolean(field[1])).map(([label, value]) => (
-                <div key={label}>
-                  <dt>{label}</dt>
-                  <dd>{value}</dd>
-                </div>
-              ))}
-            </dl>
-          )}
-          <a className={styles.sourceLink} href={source} target="_blank" rel="noreferrer">
-            Open original page
-          </a>
-        </div>
-      </article>
-    </main>
+    <PokemonFormTabs
+      forms={[
+        {
+          label: title,
+          title,
+          source,
+          uri: getValue(params.uri),
+          excerpt: getValue(params.excerpt),
+          image: isWebUrl(getValue(params.image)) ? getValue(params.image) : undefined,
+          generation: getValue(params.generation),
+          hp: getValue(params.hp),
+          attack: getValue(params.attack),
+          defense: getValue(params.defense),
+          specialAttack: getValue(params.specialAttack),
+          specialDefense: getValue(params.specialDefense),
+          speed: getValue(params.speed),
+          total: getValue(params.total),
+          species: getValue(params.species),
+          type: getValue(params.type),
+          abilities: getValue(params.abilities),
+        },
+      ]}
+    />
   );
 }

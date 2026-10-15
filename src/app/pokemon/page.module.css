@@ -11,6 +11,35 @@
   font-weight: 650;
 }
 
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  border-bottom: 1px solid #cbd5d0;
+}
+
+.tab {
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+  color: #43534c;
+  background: transparent;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.tab[aria-selected="true"] {
+  color: #176b55;
+  border-bottom-color: #176b55;
+}
+
+.tab:focus-visible {
+  outline: 2px solid #176b55;
+  outline-offset: -2px;
+}
+
 .detail {
   display: grid;
   grid-template-columns: minmax(16rem, 0.8fr) minmax(0, 1.2fr);
@@ -62,6 +91,11 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
   margin: 2rem 0;
+}
+
+.baseStats h2 {
+  margin-top: 2rem;
+  font-size: 1rem;
 }
 
 .metadata div {

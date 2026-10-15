@@ -151,6 +151,176 @@
   accent-color: #d94f3d;
 }
 
+.numericFilterHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.numericFilterHeading h3 {
+  margin-bottom: 0;
+}
+
+.numericFilterHeading output {
+  color: #53645d;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.inlineTextButton {
+  padding: 0;
+  color: #ac3e30;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.generationGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.generationGrid button {
+  display: grid;
+  justify-items: center;
+  gap: 0.05rem;
+  padding: 0.35rem 0.2rem;
+  color: #183b34;
+  background: #fff;
+  border: 1px solid #c7d3cb;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.1;
+  cursor: pointer;
+}
+
+.generationGrid button small {
+  color: #718078;
+  font-size: 0.625rem;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.generationGrid button:hover {
+  border-color: #d94f3d;
+}
+
+.generationGrid button[aria-pressed="true"] {
+  color: #fff;
+  background: #d94f3d;
+  border-color: #d94f3d;
+}
+
+.generationGrid button:disabled {
+  color: #a7b1ac;
+  background: #f2f4f0;
+  border-color: #dde3de;
+  cursor: not-allowed;
+}
+
+.generationGrid button[aria-pressed="true"] small {
+  color: #fde3dd;
+}
+
+.generationGrid button:focus-visible {
+  outline: 2px solid #176b55;
+  outline-offset: 2px;
+}
+
+/* Two overlapping range inputs; only their thumbs receive pointer events. */
+.rangeSlider {
+  position: relative;
+  height: 1.25rem;
+}
+
+.rangeSlider::before,
+.rangeSlider::after {
+  position: absolute;
+  top: 50%;
+  height: 0.3rem;
+  border-radius: 2px;
+  transform: translateY(-50%);
+  content: "";
+}
+
+.rangeSlider::before {
+  right: 0;
+  left: 0;
+  background: #e3eae5;
+}
+
+.rangeSlider::after {
+  right: calc(100% - var(--range-end));
+  left: var(--range-start);
+  background: #d94f3d;
+}
+
+.facet .rangeSlider input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: transparent;
+  pointer-events: none;
+  appearance: none;
+}
+
+.rangeSlider input::-webkit-slider-runnable-track {
+  background: transparent;
+}
+
+.rangeSlider input::-moz-range-track {
+  background: transparent;
+}
+
+.rangeSlider input::-webkit-slider-thumb {
+  width: 1rem;
+  height: 1rem;
+  background: #fff;
+  border: 2px solid #d94f3d;
+  border-radius: 50%;
+  cursor: grab;
+  pointer-events: auto;
+  appearance: none;
+}
+
+.rangeSlider input::-moz-range-thumb {
+  width: 0.75rem;
+  height: 0.75rem;
+  background: #fff;
+  border: 2px solid #d94f3d;
+  border-radius: 50%;
+  cursor: grab;
+  pointer-events: auto;
+}
+
+.rangeSlider input:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid #176b55;
+  outline-offset: 1px;
+}
+
+.rangeSlider input:focus-visible::-moz-range-thumb {
+  outline: 2px solid #176b55;
+  outline-offset: 1px;
+}
+
+.sliderScale {
+  display: flex;
+  justify-content: space-between;
+  color: #718078;
+  font-size: 0.6875rem;
+}
+
 .count {
   color: #718078;
   font-variant-numeric: tabular-nums;
@@ -335,6 +505,74 @@
 .metadata li span {
   color: #65796e;
   font-weight: 700;
+}
+
+.statsScroller {
+  max-width: 100%;
+  margin-top: 0.85rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  scrollbar-width: thin;
+}
+
+.statsHeading {
+  margin-bottom: 0.5rem;
+  color: #53645d;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.statsList {
+  display: grid;
+  grid-auto-columns: 5.25rem;
+  grid-auto-flow: column;
+  gap: 0.65rem;
+  width: max-content;
+  min-width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stat {
+  min-width: 0;
+  padding-right: 0.55rem;
+  border-right: 1px solid #dde3de;
+}
+
+.statHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.25rem;
+  color: #53645d;
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.statHeader span:last-child {
+  color: #1d2824;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.statTrack {
+  height: 0.3rem;
+  margin-top: 0.35rem;
+  overflow: hidden;
+  background: #e3eae5;
+  border-radius: 2px;
+}
+
+.statTrack span {
+  display: block;
+  height: 100%;
+  background: #d94f3d;
+}
+
+.statsScroller:focus-visible {
+  outline: 2px solid #176b55;
+  outline-offset: 2px;
 }
 
 .emptyState {
