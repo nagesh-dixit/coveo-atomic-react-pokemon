@@ -11,6 +11,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, type CSSProperties, type FormEvent } from "react";
 import { engineDefinition } from "@/lib/coveo-engine";
+import GeneratedAnswer from "./generated-answer";
 import styles from "./search-experience.module.css";
 
 type FacetController = ReturnType<typeof engineDefinition.controllers.useSpeciesFacet>;
@@ -362,6 +363,7 @@ export default function SearchExperience() {
         </aside>
 
         <section className={styles.results} aria-label="Search results">
+          <GeneratedAnswer />
           <div className={styles.resultsToolbar}>
             <p>{resultList.state.results.length} results on this page</p>
             <div className={styles.sortControl} aria-label="Sort results">

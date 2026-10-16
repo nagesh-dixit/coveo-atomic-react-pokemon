@@ -1,3 +1,4 @@
+import { buildGeneratedAnswer, type SearchEngine } from "@coveo/headless";
 import {
   buildNumericRange,
   defineFacet,
@@ -19,7 +20,8 @@ export const engineDefinition = defineSearchEngine({
   configuration: {
     organizationId: process.env.NEXT_PUBLIC_COVEO_ORG_ID!,
     accessToken: process.env.NEXT_PUBLIC_COVEO_ACCESS_TOKEN!,
-    analytics: { trackingId: process.env.NEXT_PUBLIC_COVEO_TRACKING_ID },
+    // Relevance Generative Answering is a Coveo for Service feature that requires legacy analytics.
+    analytics: { analyticsMode: "legacy", trackingId: process.env.NEXT_PUBLIC_COVEO_TRACKING_ID },
     search: { searchHub: "Basic Search" },
   },
   controllers: {
@@ -71,6 +73,18 @@ export const engineDefinition = defineSearchEngine({
     speedFilter: defineStatFilter("pm_speed"),
     totalFilter: defineStatFilter("pm_total"),
     parameterManager: defineSearchParameterManager(),
+    // Registered on the server too, so the first search asks the pipeline for an RGA answer. It is
+    // disabled there so only the browser consumes the answer stream.
+    generatedAnswer: {
+      build: (engine: SearchEngine) =>
+        buildGeneratedAnswer(engine, {
+          fieldsToIncludeInCitations: ["pm_image"],
+          initialState: {
+            isEnabled: typeof window !== "undefined",
+            responseFormat: { contentFormat: ["text/markdown", "text/plain"] },
+          },
+        }),
+    },
     pager: definePager(),
     sort: defineSort(),
   },

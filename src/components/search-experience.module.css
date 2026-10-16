@@ -659,3 +659,124 @@
     width: 100%;
   }
 }
+.generatedAnswer {
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.15rem;
+  background: #fff;
+  border: 1px solid #dde3de;
+  border-left: 3px solid #183b34;
+  border-radius: 4px;
+}
+
+.generatedAnswerHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.generatedAnswerHeading h2 {
+  color: #183b34;
+  font-size: 0.875rem;
+}
+
+.generatedAnswerStatus {
+  color: #718078;
+  font-size: 0.75rem;
+}
+
+.generatedAnswerBody {
+  color: #2c3a34;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.generatedAnswerPlain {
+  white-space: pre-wrap;
+}
+
+.generatedAnswerBody h1,
+.generatedAnswerBody h2,
+.generatedAnswerBody h3,
+.generatedAnswerBody h4 {
+  margin: 0.85rem 0 0.35rem;
+  font-size: 0.9375rem;
+}
+
+.generatedAnswerBody p,
+.generatedAnswerBody ul,
+.generatedAnswerBody ol {
+  margin: 0.4rem 0;
+}
+
+.generatedAnswerBody ul,
+.generatedAnswerBody ol {
+  padding-left: 1.25rem;
+}
+
+.generatedAnswerError {
+  color: #ac3e30;
+  font-size: 0.875rem;
+}
+
+.citations {
+  margin-top: 0.85rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid #e3eae5;
+}
+
+.citations h3 {
+  margin-bottom: 0.35rem;
+  color: #53645d;
+  font-size: 0.75rem;
+}
+
+.citations ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.citations a {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  color: #175c49;
+  background: #eaf0eb;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.citations a:hover {
+  color: #ac3e30;
+}
+
+.answerFeedback {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.75rem;
+  color: #53645d;
+  font-size: 0.75rem;
+}
+
+.answerFeedback button {
+  padding: 0.2rem 0.6rem;
+  color: #53645d;
+  background: #fff;
+  border: 1px solid #c7d3cb;
+  border-radius: 4px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.answerFeedback button[aria-pressed="true"] {
+  color: #fff;
+  background: #183b34;
+  border-color: #183b34;
+}
