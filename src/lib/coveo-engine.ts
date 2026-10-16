@@ -28,8 +28,10 @@ export const engineDefinition = defineSearchEngine({
       options: {
         fieldsToInclude: [
           "pm_generation",
+          "pm_description",
           "pm_species",
           "pm_type",
+          "pm_secondary_type",
           "pm_abilities",
           "pm_image",
           "pm_form",

@@ -10,7 +10,7 @@ export type PokemonForm = {
   title: string;
   source: string;
   uri?: string;
-  excerpt?: string;
+  description?: string;
   image?: string;
   generation?: string;
   hp?: string;
@@ -88,7 +88,7 @@ export default function PokemonFormTabs({ forms, returnTo }: { forms: PokemonFor
           <p className={styles.kicker}>POKEMON DETAILS</p>
           <h1>{selectedForm.title}</h1>
           {selectedForm.uri && <p className={styles.uri}>{selectedForm.uri}</p>}
-          {selectedForm.excerpt && <p className={styles.excerpt}>{selectedForm.excerpt}</p>}
+          {selectedForm.description && <p className={styles.description}>{selectedForm.description}</p>}
           {metadata.length > 0 && (
             <dl className={styles.metadata}>
               {metadata.map(([label, value]) => (
@@ -102,7 +102,7 @@ export default function PokemonFormTabs({ forms, returnTo }: { forms: PokemonFor
           {baseStats.length > 0 && (
             <section className={styles.baseStats} aria-label="Base stats">
               <h2>Base stats</h2>
-              <dl className={styles.metadata}>
+              <dl className={styles.statsGrid}>
                 {baseStats.map(([label, value]) => (
                   <div key={label}>
                     <dt>{label}</dt>

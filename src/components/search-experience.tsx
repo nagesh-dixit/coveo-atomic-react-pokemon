@@ -182,6 +182,12 @@ function displayField(value: unknown): string | undefined {
   return undefined;
 }
 
+// Primary and secondary type shown together, e.g. "Grass Poison".
+function typeLabel(result: SearchResult): string | undefined {
+  const types = [displayField(result.raw.pm_type), displayField(result.raw.pm_secondary_type)];
+  return [...new Set(types.filter(Boolean))].join(" ") || undefined;
+}
+
 function identifiableUri(result: SearchResult): string | undefined {
   return displayField(result.raw.identifiableuri);
 }
@@ -397,6 +403,7 @@ export default function SearchExperience() {
             <ol className={`${styles.resultList} ${viewMode === "grid" ? styles.gridView : styles.listView}`}>
               {resultList.state.results.map((result) => {
                 const imageSrc = displayField(result.raw.pm_image);
+                const description = displayField(result.raw.pm_description);
                 const stats = [
                   { label: "HP", value: displayField(result.raw.pm_hp), maximum: 255 },
                   { label: "Attack", value: displayField(result.raw.pm_attack), maximum: 255 },
@@ -424,7 +431,7 @@ export default function SearchExperience() {
                 });
                 const detailFields = {
                   uri: result.printableUri,
-                  excerpt: result.excerpt,
+                  description,
                   image: imageSrc,
                   generation: displayField(result.raw.pm_generation),
                   hp: displayField(result.raw.pm_hp),
@@ -435,7 +442,7 @@ export default function SearchExperience() {
                   speed: displayField(result.raw.pm_speed),
                   total: displayField(result.raw.pm_total),
                   species: displayField(result.raw.pm_species),
-                  type: displayField(result.raw.pm_type),
+                  type: typeLabel(result),
                   abilities: displayField(result.raw.pm_abilities),
                 };
                 Object.entries(detailFields).forEach(([key, value]) => {
@@ -480,7 +487,7 @@ export default function SearchExperience() {
                       title: form.title || parentTitle,
                       source: form.clickUri || parentSource,
                       uri: form.printableUri,
-                      excerpt: form.excerpt,
+                      description: displayField(form.raw.pm_description),
                       image: formImage,
                       generation: displayField(form.raw.pm_generation),
                       hp: displayField(form.raw.pm_hp),
@@ -491,7 +498,7 @@ export default function SearchExperience() {
                       speed: displayField(form.raw.pm_speed),
                       total: displayField(form.raw.pm_total),
                       species: displayField(form.raw.pm_species),
-                      type: displayField(form.raw.pm_type),
+                      type: typeLabel(form),
                       abilities: displayField(form.raw.pm_abilities),
                       identifiableUri: formUri,
                     };
@@ -549,7 +556,7 @@ export default function SearchExperience() {
                         {result.title || result.clickUri}
                       </Link>
                       <p className={styles.uri}>{result.printableUri}</p>
-                      {result.excerpt && <p className={styles.excerpt}>{result.excerpt}</p>}
+                      {description && <p className={styles.description}>{description}</p>}
                       {metadata.length > 0 && (
                         <ul className={styles.metadata}>
                           {metadata.map(([label, value]) => (

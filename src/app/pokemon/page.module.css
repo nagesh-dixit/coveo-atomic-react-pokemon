@@ -42,7 +42,7 @@
 
 .detail {
   display: grid;
-  grid-template-columns: minmax(16rem, 0.8fr) minmax(0, 1.2fr);
+  grid-template-columns: minmax(14rem, 0.65fr) minmax(0, 1.35fr);
   gap: clamp(1.5rem, 4vw, 3.5rem);
   align-items: start;
   border-top: 1px solid #d8dfdc;
@@ -80,10 +80,10 @@
   overflow-wrap: anywhere;
 }
 
-.excerpt {
-  margin: 1.5rem 0;
-  font-size: 1.125rem;
-  line-height: 1.65;
+.description {
+  margin: 1.5rem 0 1.75rem;
+  font-size: 1.1875rem;
+  line-height: 1.7;
 }
 
 .metadata {
@@ -93,9 +93,43 @@
   margin: 2rem 0;
 }
 
+.baseStats {
+  margin-bottom: 1.75rem;
+}
+
 .baseStats h2 {
-  margin-top: 2rem;
-  font-size: 1rem;
+  margin: 0 0 0.5rem;
+  color: #5c6964;
+  font-size: 0.8rem;
+  font-weight: 650;
+}
+
+/* Compact tiles so the stats take less room than the description. */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5.75rem, 1fr));
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.statsGrid div {
+  padding: 0.35rem 0.55rem;
+  background: #f0f5f2;
+  border-radius: 4px;
+}
+
+.statsGrid dt {
+  color: #5c6964;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.statsGrid dd {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .metadata div {
